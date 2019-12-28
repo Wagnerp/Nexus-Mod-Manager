@@ -148,9 +148,9 @@ namespace Nexus.Client.ModManagement
 		/// <summary>
 		/// The method that is called to start the backgound task.
 		/// </summary>
-		/// <param name="p_objArgs">Arguments to for the task execution.</param>
+		/// <param name="args">Arguments to for the task execution.</param>
 		/// <returns>Always <c>null</c>.</returns>
-		protected override object DoWork(object[] p_objArgs)
+		protected override object DoWork(object[] args)
 		{
 			OverallMessage = "Backuping Nexus Mod Manager...";
 			OverallProgress = 0;
@@ -345,7 +345,9 @@ namespace Nexus.Client.ModManagement
 
 				IModProfile mprModProfile = AddProfile(null, null, bteLoadOrder, ModManager.GameMode.ModeId, -1, strOptionalFiles, Path.Combine(BackupDirectory, "PROFILE"));
 
-				Directory.CreateDirectory(Path.Combine(BackupDirectory, ModManager.GameMode.Name));
+                string gameModeName = PurgeIllegalWindowsCharacters(ModManager.GameMode.Name);
+
+				Directory.CreateDirectory(Path.Combine(BackupDirectory, gameModeName));
 
 				string installLog = Path.Combine(ModManager.GameMode.GameModeEnvironmentInfo.InstallInfoDirectory, "InstallLog.xml");
 
@@ -374,7 +376,7 @@ namespace Nexus.Client.ModManagement
 				szcCompressor.CompressionMode = SevenZip.CompressionMode.Create;
 				szcCompressor.FileCompressionStarted += new EventHandler<FileNameEventArgs>(compressor_FileCompressionStarted);
 
-				szcCompressor.CompressDirectory(startPath, Path.Combine(SelectedPath, ModManager.GameMode.ModeId + "_NMM_BACKUP_" + strDateTimeStamp + ".zip"), true);
+				szcCompressor.CompressDirectory(startPath, Path.Combine(SelectedPath, ModManager.GameMode.ModeId + "_NMM_BACKUP_" + strDateTimeStamp + ".zip"));
 
 				OverallMessage = "Deleting the leftovers.";
 				StepOverallProgress();
@@ -506,5 +508,23 @@ namespace Nexus.Client.ModManagement
 			}
 		}
 
-	}
+        /// <summary>
+        /// Removes all illegal characters from game names, such that all games can be backed up on Windows
+        /// </summary>
+        /// <param name="gameName">Name of the game</param>
+        /// <returns>Clean string</returns>
+        private string PurgeIllegalWindowsCharacters(string gameName)
+        {
+            string toReturn = gameName.Replace(":", string.Empty);
+            toReturn = toReturn.Replace("<", string.Empty);
+            toReturn = toReturn.Replace(">", string.Empty);
+            toReturn = toReturn.Replace("\"", string.Empty);
+            toReturn = toReturn.Replace("/", string.Empty);
+            toReturn = toReturn.Replace("\\", string.Empty);
+            toReturn = toReturn.Replace("|", string.Empty);
+            toReturn = toReturn.Replace("?", string.Empty);
+            toReturn = toReturn.Replace("*", string.Empty);
+            return toReturn.Replace("..", string.Empty); // Path traversal, looks malicious
+        }
+    }
 }

@@ -1340,9 +1340,11 @@ namespace Nexus.Client.ModManagement
 				SaveConfig();
 				return mprModProfile;
 			}
-			catch (Exception ex)
+			catch (Exception e)
 			{
-			}
+			    Trace.TraceWarning("NexusClient.ProfileManager.ImportProfile() - Encountered an ignored Exception.");
+			    TraceUtil.TraceException(e);
+            }
 
 			return null;
 		}
@@ -1631,7 +1633,7 @@ namespace Nexus.Client.ModManagement
 		/// <returns>A background task set allowing the caller to track the progress of the operation.</returns>
 		public IBackgroundTask CheckOnlineProfileIntegrity(IModProfile p_impProfile, Dictionary<string, string> p_dicMissingMods, string p_strGameModeID, ConfirmActionMethod p_camConfirm)
 		{
-			CheckOnlineProfileIntegrityTask cotCheckIntegrity = new CheckOnlineProfileIntegrityTask(ModRepository, p_impProfile, this, p_dicMissingMods, p_strGameModeID);
+			CheckOnlineProfileIntegrityTask cotCheckIntegrity = new CheckOnlineProfileIntegrityTask(ModRepository, p_impProfile, this);
 			cotCheckIntegrity.Update(p_camConfirm);
 			return cotCheckIntegrity;
 		}
@@ -1644,7 +1646,7 @@ namespace Nexus.Client.ModManagement
 		/// <returns>A background task set allowing the caller to track the progress of the operation.</returns>
 		public void AsyncCheckOnlineProfileIntegrity(IModProfile p_impProfile, Dictionary<string, string> p_dicMissingMods, string p_strGameModeID, ConfirmActionMethod p_camConfirm)
 		{
-			CheckOnlineProfileIntegrityTask cotCheckIntegrity = new CheckOnlineProfileIntegrityTask(ModRepository, p_impProfile, this, p_dicMissingMods, p_strGameModeID);
+			CheckOnlineProfileIntegrityTask cotCheckIntegrity = new CheckOnlineProfileIntegrityTask(ModRepository, p_impProfile, this);
 			AsyncCheckOnlineProfileIntegrityTask(cotCheckIntegrity, p_camConfirm);
 		}
 
@@ -1772,7 +1774,7 @@ namespace Nexus.Client.ModManagement
 		{
 			if (ModRepository.UserStatus != null)
 			{
-				ModUpdateCheckTask mutModUpdateCheck = new ModUpdateCheckTask(ModManager.AutoUpdater, this, ModRepository, p_lstModList, p_booOverrideCategorySetup, p_booMissingDownloadId, ModManager.EnvironmentInfo.Settings.OverrideLocalModNames);
+				ModUpdateCheckTask mutModUpdateCheck = new ModUpdateCheckTask(ModManager.AutoUpdater, this, ModRepository, p_lstModList, string.Empty, p_booOverrideCategorySetup, p_booMissingDownloadId, ModManager.EnvironmentInfo.Settings.OverrideLocalModNames);
 				mutModUpdateCheck.Update(p_camConfirm);
 				return mutModUpdateCheck;
 			}
@@ -1790,7 +1792,7 @@ namespace Nexus.Client.ModManagement
 		/// <returns>The background task that will run the updaters.</returns>
 		public void AsyncUpdateMods(List<IMod> p_lstModList, ConfirmActionMethod p_camConfirm, bool p_booOverrideCategorySetup, bool p_booMissingDownloadId)
 		{
-			ModUpdateCheckTask mutModUpdateCheck = new ModUpdateCheckTask(ModManager.AutoUpdater, this, ModRepository, p_lstModList, p_booOverrideCategorySetup, p_booMissingDownloadId, ModManager.EnvironmentInfo.Settings.OverrideLocalModNames);
+			ModUpdateCheckTask mutModUpdateCheck = new ModUpdateCheckTask(ModManager.AutoUpdater, this, ModRepository, p_lstModList, string.Empty, p_booOverrideCategorySetup, p_booMissingDownloadId, ModManager.EnvironmentInfo.Settings.OverrideLocalModNames);
 			AsyncUpdateModsTask(mutModUpdateCheck, p_camConfirm);
 		}
 

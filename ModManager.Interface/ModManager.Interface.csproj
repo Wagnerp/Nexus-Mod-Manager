@@ -23,29 +23,43 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
+    <OutputPath>..\Stage\Debug\</OutputPath>
+    <IntermediateOutputPath>..\Stage\obj\Debug\</IntermediateOutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>bin\Debug\ModManager.Interface.XML</DocumentationFile>
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
+    <OutputPath>..\Stage\Release\</OutputPath>
+    <IntermediateOutputPath>..\Stage\obj\Release\</IntermediateOutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="FluentNexus, Version=0.7.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\Stage\packages\Pathoschild.FluentNexus.0.7.1\lib\net45\FluentNexus.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\Stage\packages\Newtonsoft.Json.12.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="Pathoschild.Http.Client, Version=3.3.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\Stage\packages\Pathoschild.Http.FluentClient.3.3.0\lib\net45\Pathoschild.Http.Client.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Net.Http.Formatting, Version=5.2.7.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\Stage\packages\Microsoft.AspNet.WebApi.Client.5.2.7\lib\net45\System.Net.Http.Formatting.dll</HintPath>
+    </Reference>
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
@@ -55,11 +69,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\AssemblyInformationalVersion.cs">
-      <Link>Properties\AssemblyInformationalVersion.cs</Link>
-    </Compile>
-    <Compile Include="..\SharedSolutionVersionInfo.Auto.cs">
-      <Link>Properties\SharedSolutionVersionInfo.Auto.cs</Link>
+    <Compile Include="..\SharedAssemblyInformation.cs">
+      <Link>Properties\SharedAssemblyInformation.cs</Link>
     </Compile>
     <Compile Include="CategoriesInfo.cs" />
     <Compile Include="Games\GameLauncherBase.cs" />
@@ -177,6 +188,8 @@
     <Compile Include="TipsManagement\ITipsManager.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="app.config" />
+    <None Include="packages.config" />
     <None Include="Resources\DefaultNexusIcon.ico" />
   </ItemGroup>
   <ItemGroup>
@@ -202,22 +215,27 @@
     <ProjectReference Include="..\ChinhDo.Transactions.FileManager\ChinhDo.Transactions.FileManager.csproj">
       <Project>{e824acbb-90c8-4c60-9d52-9c8020e98e3e}</Project>
       <Name>ChinhDo.Transactions.FileManager</Name>
+      <Private>False</Private>
     </ProjectReference>
     <ProjectReference Include="..\Commanding\Commanding.csproj">
       <Project>{1732bb96-1f74-4b99-82d6-4d1239c9d36a}</Project>
       <Name>Commanding</Name>
+      <Private>False</Private>
     </ProjectReference>
     <ProjectReference Include="..\NexusClient.Interface\NexusClient.Interface.csproj">
       <Project>{d586e7d8-9c8e-48f0-b20c-31a52b37e9d3}</Project>
       <Name>NexusClient.Interface</Name>
+      <Private>False</Private>
     </ProjectReference>
     <ProjectReference Include="..\UI\UI.csproj">
       <Project>{5edd4e37-b8f3-403d-a2e9-aff31b21a236}</Project>
       <Name>UI</Name>
+      <Private>False</Private>
     </ProjectReference>
     <ProjectReference Include="..\Util\Util.csproj">
       <Project>{44caa655-38c2-4ca2-ba68-a8d5c44b169d}</Project>
       <Name>Util</Name>
+      <Private>False</Private>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

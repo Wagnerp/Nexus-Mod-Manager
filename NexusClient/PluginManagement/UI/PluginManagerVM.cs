@@ -244,6 +244,18 @@ namespace Nexus.Client.PluginManagement.UI
 			}
 		}
 
+        /// <summary>
+		/// Gets the list of official, unmanaged, plugin names, ordered by load order.
+		/// </summary>
+		/// <value>The list of official, unmanaged, plugin names, ordered by load order.</value>
+        public string[] OrderedOfficialUnmanagedPluginNames
+        {
+            get
+            {
+                return CurrentGameMode.OrderedOfficialUnmanagedPluginNames;
+            }
+        }
+
         #endregion
 
         #region Constructors
@@ -423,11 +435,14 @@ namespace Nexus.Client.PluginManagement.UI
 		{
 			List<Plugin> lstActivePlugins = ActivePlugins.ToList();
 
-			foreach (string criticalPlugin in OrderedCriticalPluginNames)
+            // Remove all critical or unmanaged plugins from the list of plugins to deactivate.
+            foreach (string ignoredPlugin in OrderedCriticalPluginNames.Concat(OrderedOfficialUnmanagedPluginNames))
 			{
-				Plugin plgCritical = PluginManager.GetRegisteredPlugin(criticalPlugin);
-				if (plgCritical != null)
-					lstActivePlugins.Remove(plgCritical);
+				var plgIgnored = PluginManager.GetRegisteredPlugin(ignoredPlugin);
+				if (plgIgnored != null)
+                {
+                    lstActivePlugins.Remove(plgIgnored);
+                }
 			}
 
 			ManagingMultiplePlugins(this, new EventArgs<IBackgroundTask>(PluginManager.ManageMultiplePluginsTask(lstActivePlugins, false, ConfirmUpdaterAction)));
@@ -1238,12 +1253,12 @@ namespace Nexus.Client.PluginManagement.UI
 						throw new InvalidImportSourceException("The specified import source has more than one game mode defined.");
 				}
 
-				Match mchPlugin = Regex.Match(strLine, @"^(.+\.es(?:p|m))=([0:1])$");
+				Match mchPlugin = Regex.Match(strLine, @"^(.+\.es(?:p|m|l))=([0:1])$");
 				if (mchPlugin.Success)
 					kvpLoadOrder.Add(strLine.Split('=')[0], strLine.Split('=')[1]);
 				else
 				{
-					mchPlugin = Regex.Match(strLine, @"^(.+\.es(?:p|m))$");
+					mchPlugin = Regex.Match(strLine, @"^(.+\.es(?:p|m|l))$");
 					if (mchPlugin.Success)
 						kvpLoadOrder.Add(strLine, String.Empty);
 				}

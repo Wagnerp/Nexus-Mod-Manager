@@ -93,11 +93,11 @@ namespace Nexus.Client.Games
 		/// <summary>
 		/// The delegate that is called to start the backgound task.
 		/// </summary>
-		/// <param name="p_objArgs">the file patterns to search for.</param>
+		/// <param name="args">the file patterns to search for.</param>
 		/// <returns>Always <c>null</c>.</returns>
-		protected override object DoWork(object[] p_objArgs)
+		protected override object DoWork(object[] args)
 		{
-			string[] strSearchFiles = (string[])p_objArgs;
+			string[] strSearchFiles = (string[])args;
 			Regex[] rgxPatterns = new Regex[strSearchFiles.Length];
 			string strSeparatorChar = Path.DirectorySeparatorChar.Equals('\\') ? @"\\" : Path.DirectorySeparatorChar.ToString();
 			for (Int32 i = 0; i < strSearchFiles.Length; i++)
@@ -106,7 +106,7 @@ namespace Nexus.Client.Games
 
 			Queue<string> queSearchPaths = new Queue<string>();
 			foreach (DriveInfo difDrive in difDrives)
-				if ((difDrive.DriveType != DriveType.CDRom) && difDrive.IsReady)
+				if (difDrive.DriveType == DriveType.Fixed && difDrive.IsReady)
 					queSearchPaths.Enqueue(difDrive.Name);
 			Int32 intFOlderCnt = 0;
 			while (queSearchPaths.Count > 0)

@@ -23,7 +23,8 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
+    <OutputPath>..\Stage\Debug\</OutputPath>
+    <IntermediateOutputPath>..\Stage\obj\Debug\</IntermediateOutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -32,43 +33,47 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
+    <OutputPath>..\Stage\Release\</OutputPath>
+    <IntermediateOutputPath>..\Stage\obj\Release\</IntermediateOutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="SevenZipSharp, Version=0.64.3890.29348, Culture=neutral, PublicKeyToken=20de82c62b055c88, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\lib\SevenZipSharp.dll</HintPath>
+    <Reference Include="SevenZipSharp, Version=1.1.144.0, Culture=neutral, PublicKeyToken=c8ff6ba0184838bb, processorArchitecture=MSIL">
+      <HintPath>..\Stage\packages\Squid-Box.SevenZipSharp.1.1.144\lib\net45\SevenZipSharp.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
     <Reference Include="WindowsBase">
-      <RequiredTargetFramework>3.0</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Runtime.Serialization">
+      <HintPath>..\..\..\..\..\usr\lib\mono\4.6-api\System.Runtime.Serialization.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\SharedSolutionVersionInfo.Auto.cs">
-      <Link>Properties\SharedSolutionVersionInfo.Auto.cs</Link>
+    <Compile Include="..\SharedAssemblyInformation.cs">
+      <Link>Properties\SharedAssemblyInformation.cs</Link>
     </Compile>
     <Compile Include="Archive.cs" />
     <Compile Include="BindingHelper.cs" />
     <Compile Include="CancelEventArgs`1.cs" />
+    <Compile Include="CommonData.cs" />
     <Compile Include="Downloader\CompletedDownloadEventArgs.cs" />
     <Compile Include="EventArgs.cs" />
     <Compile Include="ExtendedImage.cs" />
+    <Compile Include="GameDomainTranslator.cs" />
     <Compile Include="ImageExtensions.cs" />
     <Compile Include="FileUtil.cs" />
     <Compile Include="Collections\IListExtensions.cs" />
     <Compile Include="ImageFormatException.cs" />
+    <Compile Include="Md5.cs" />
     <Compile Include="ObjectHelper.cs" />
     <Compile Include="ObservableObject.cs" />
     <Compile Include="Collections\ObservableSet.cs" />
@@ -81,12 +86,7 @@
     <Compile Include="RegistryUtil.cs" />
     <Compile Include="TextUtil.cs" />
     <Compile Include="ThreadSafeSevenZipExtractor.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\ChinhDo.Transactions.FileManager\ChinhDo.Transactions.FileManager.csproj">
-      <Project>{E824ACBB-90C8-4C60-9D52-9C8020E98E3E}</Project>
-      <Name>ChinhDo.Transactions.FileManager</Name>
-    </ProjectReference>
+    <Compile Include="JSONSerializer.cs" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CancelProgressEventArgs.cs" />
@@ -104,6 +104,9 @@
     <Compile Include="Threading\TrackedThreadManager.cs" />
     <Compile Include="TraceUtil.cs" />
     <Compile Include="UriUtil.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -9,7 +9,6 @@ namespace Nexus.Client.ModManagement
 {
 	public class ModMigrationTask : ThreadedBackgroundTask
 	{
-		bool m_booCancel = false;
 		private bool m_booMigrate = true;
 
 		protected ConfirmActionMethod ConfirmActionMethod { get; private set; }
@@ -70,20 +69,11 @@ namespace Nexus.Client.ModManagement
 		}
 
 		/// <summary>
-		/// Cancels the update.
-		/// </summary>
-		public override void Cancel()
-		{
-			base.Cancel();
-			m_booCancel = true;
-		}
-
-		/// <summary>
 		/// The method that is called to start the backgound task.
 		/// </summary>
-		/// <param name="p_objArgs">Arguments to for the task execution.</param>
+		/// <param name="args">Arguments to for the task execution.</param>
 		/// <returns>Always <c>null</c>.</returns>
-		protected override object DoWork(object[] p_objArgs)
+		protected override object DoWork(object[] args)
 		{
 			byte[] bteLoadOrder = null;
 			byte[] bteModList = null;

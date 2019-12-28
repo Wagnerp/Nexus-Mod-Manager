@@ -12,8 +12,6 @@ namespace Nexus.Client.PluginManagement
 {
 	public class ApplyLoadOrderTask : ThreadedBackgroundTask
 	{
-		bool m_booCancel = false;
-
 		#region Properties
 
 		/// <summary>
@@ -75,20 +73,11 @@ namespace Nexus.Client.PluginManagement
 		}
 
 		/// <summary>
-		/// Cancels the update.
-		/// </summary>
-		public override void Cancel()
-		{
-			base.Cancel();
-			m_booCancel = true;
-		}
-
-		/// <summary>
 		/// The method that is called to start the backgound task.
 		/// </summary>
-		/// <param name="p_objArgs">Arguments to for the task execution.</param>
+		/// <param name="args">Arguments to for the task execution.</param>
 		/// <returns>Always <c>null</c>.</returns>
-		protected override object DoWork(object[] p_objArgs)
+		protected override object DoWork(object[] args)
 		{
 			OverallMessage = String.Format("Applying load order...");
 			OverallProgress = 0;

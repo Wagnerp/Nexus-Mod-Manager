@@ -15,8 +15,6 @@ namespace Nexus.Client.ModManagement
 {
 	public class LinkActivationTask : ThreadedBackgroundTask
 	{
-		bool m_booCancel = false;
-
 		#region Properties
 
 		/// <summary>
@@ -97,22 +95,13 @@ namespace Nexus.Client.ModManagement
 		}
 
 		/// <summary>
-		/// Cancels the update.
-		/// </summary>
-		public override void Cancel()
-		{
-			base.Cancel();
-			m_booCancel = true;
-		}
-
-		/// <summary>
 		/// The method that is called to start the backgound task.
 		/// </summary>
-		/// <param name="p_objArgs">Arguments to for the task execution.</param>
+		/// <param name="args">Arguments to for the task execution.</param>
 		/// <returns>Always <c>null</c>.</returns>
-		protected override object DoWork(object[] p_objArgs)
+		protected override object DoWork(object[] args)
 		{
-			ConfirmActionMethod camConfirm = (ConfirmActionMethod)p_objArgs[0];
+			ConfirmActionMethod camConfirm = (ConfirmActionMethod)args[0];
 			bool booLotsOfLinks = false;
 			int intProgress = 0;
 			double dblRatio = 0;
@@ -127,8 +116,8 @@ namespace Nexus.Client.ModManagement
 
 			if (!Disabling)
 			{
-				string strModFilenamePath = Path.Combine(VirtualModActivator.VirtualPath, Path.GetFileNameWithoutExtension(Mod.Filename));
-				string strLinkFilenamePath = MultiHDMode ? Path.Combine(VirtualModActivator.HDLinkFolder, Path.GetFileNameWithoutExtension(Mod.Filename)) : string.Empty;
+				string strModFilenamePath = Path.Combine(VirtualModActivator.VirtualPath, Path.GetFileNameWithoutExtension(Mod.Filename).Trim());
+				string strLinkFilenamePath = MultiHDMode ? Path.Combine(VirtualModActivator.HDLinkFolder, Path.GetFileNameWithoutExtension(Mod.Filename).Trim()) : string.Empty;
 				string strModDownloadIDPath = (string.IsNullOrWhiteSpace(Mod.DownloadId) || (Mod.DownloadId.Length <= 1) || Mod.DownloadId.Equals("-1", StringComparison.OrdinalIgnoreCase)) ? string.Empty : Path.Combine(VirtualModActivator.VirtualPath, Mod.DownloadId);
 				string strLinkDownloadIDPath = MultiHDMode ? ((string.IsNullOrWhiteSpace(Mod.DownloadId) || (Mod.DownloadId.Length <= 1) || Mod.DownloadId.Equals("-1", StringComparison.OrdinalIgnoreCase)) ? string.Empty : Path.Combine(VirtualModActivator.HDLinkFolder, Mod.DownloadId)) : string.Empty;
 				string strModFolderPath = strModFilenamePath;

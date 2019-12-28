@@ -1,108 +1,140 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Reflection;
-using System.Windows.Forms;
-
-namespace Nexus.Client.Games
+﻿namespace Nexus.Client.Games
 {
-	/// <summary>
-	/// A registry of all game modes whose mods can be managed by the application.
-	/// </summary>
-	public class GameModeRegistry
+    using System;
+    using System.Collections.Generic;
+    using System.Diagnostics;
+    using System.IO;
+    using System.Linq;
+    using System.Reflection;
+    using System.Windows.Forms;
+
+    using Exceptions;
+
+    /// <summary>
+    /// A registry of all game modes whose mods can be managed by the application.
+    /// </summary>
+    public class GameModeRegistry
 	{
 		/// <summary>
 		/// Searches for game mode factories in the specified path, and loads
 		/// any factories that are found into a registry.
 		/// </summary>
 		/// <returns>A registry containing all of the discovered game mode factories.</returns>
-		public static GameModeRegistry DiscoverSupportedGameModes(EnvironmentInfo p_eifEnvironmentInfo)
+		public static GameModeRegistry DiscoverSupportedGameModes(EnvironmentInfo environmentInfo)
 		{
 			Trace.TraceInformation("Discovering Game Mode Factories...");
 			Trace.Indent();
 
-			string strGameModesPath = Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), "GameModes");
+			var gameModesPath = Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), "GameModes");
 
-			Trace.TraceInformation("Looking in: {0}", strGameModesPath);
+		    if (!Directory.Exists(gameModesPath))
+            {
+                Directory.CreateDirectory(gameModesPath);
+            }
 
-			GameModeRegistry gmrRegistry = new GameModeRegistry();
-			string[] strAssemblies = Directory.GetFiles(strGameModesPath, "*.dll");
-			foreach (string strAssembly in strAssemblies)
+            Trace.TraceInformation("Looking in: {0}", gameModesPath);
+
+		    var assemblies = Directory.GetFiles(gameModesPath, "*.dll");
+
+            //If there are no assemblies detected then an exception must be thrown
+            //to prevent a divide by zero exception further along
+		    if (!assemblies.Any())
+		    {
+		        var debugMessage = string.Empty;
+#if DEBUG
+		        debugMessage = @"Compile the Game Modes directory in the solution.";
+#endif
+
+                throw new GameModeRegistryException(gameModesPath, debugMessage);
+		    }
+
+            var registry = new GameModeRegistry();
+
+		    foreach (var assembly in assemblies)
 			{
-				Trace.TraceInformation("Checking: {0}", Path.GetFileName(strAssembly));
+				Trace.TraceInformation("Checking: {0}", Path.GetFileName(assembly));
 				Trace.Indent();
 
-				Assembly asmGameMode = Assembly.LoadFrom(strAssembly);
-				try
+				var gameMode = Assembly.LoadFrom(assembly);
+
+			    try
 				{
-					Type[] tpeTypes = asmGameMode.GetExportedTypes();
-					foreach (Type tpeType in tpeTypes)
+					var types = gameMode.GetExportedTypes();
+
+				    foreach (var type in types)
 					{
-						if (typeof(IGameModeFactory).IsAssignableFrom(tpeType) && !tpeType.IsAbstract)
-						{
-							Trace.TraceInformation("Initializing: {0}", tpeType.FullName);
-							Trace.Indent();
+					    if (!typeof(IGameModeFactory).IsAssignableFrom(type) || type.IsAbstract) continue;
 
-							ConstructorInfo cifConstructor = tpeType.GetConstructor(new Type[] { typeof(IEnvironmentInfo) });
-							if (cifConstructor == null)
-							{
-								Trace.TraceInformation("No constructor accepting one argument of type IEnvironmentInfo found.");
-								Trace.Unindent();
-								continue;
-							}
-							IGameModeFactory gmfGameModeFactory = (IGameModeFactory)cifConstructor.Invoke(new object[] { p_eifEnvironmentInfo });
-							gmrRegistry.RegisterGameMode(gmfGameModeFactory);
+					    Trace.TraceInformation("Initializing: {0}", type.FullName);
+					    Trace.Indent();
 
-							Trace.Unindent();
-						}
+					    var constructor = type.GetConstructor(new Type[] { typeof(IEnvironmentInfo) });
+
+					    if (constructor == null)
+					    {
+					        Trace.TraceInformation("No constructor accepting one argument of type IEnvironmentInfo found.");
+					        Trace.Unindent();
+
+					        continue;
+					    }
+
+					    var gmfGameModeFactory = (IGameModeFactory)constructor.Invoke(new object[] { environmentInfo });
+					    registry.RegisterGameMode(gmfGameModeFactory);
+
+					    Trace.Unindent();
 					}
 				}
 				catch (FileNotFoundException e)
 				{
-					Trace.TraceError(String.Format("Cannot load {0}: cannot find dependency {1}", strAssembly, e.FileName));
-					//some dependencies were missing, so we couldn't load the assembly
-					// given that these are plugins we don't have control over the dependecies:
+					Trace.TraceError($"Cannot load {assembly}: cannot find dependency {e.FileName}");
+					// some dependencies were missing, so we couldn't load the assembly
+					// given that these are plugins we don't have control over the dependencies:
 					// we may not even know what they (we can get their name, but if it's a custom
 					// dll not part of the client code base, we can't provide it even if we wanted to)
 					// there's nothing we can do, so simply skip the assembly
 				}
-				Trace.Unindent();
-			}
-			Trace.Unindent();
 
-			return gmrRegistry;
+			    Trace.Unindent();
+			}
+
+		    Trace.Unindent();
+
+			return registry;
 		}
 
 		/// <summary>
 		/// Loads the factories for games that have been previously detected as installed.
 		/// </summary>
-		/// <param name="p_gmrSupportedGameModes">A registry containing the factories for all supported game modes.</param>
-		/// <param name="p_eifEnvironmentInfo">The application's envrionment info.</param>
+		/// <param name="supportedGameModes">A registry containing the factories for all supported game modes.</param>
+		/// <param name="environmentInfo">The application's environment info.</param>
 		/// <returns>A registry containing all of the game mode factories for games that were previously detected as installed.</returns>
-		public static GameModeRegistry LoadInstalledGameModes(GameModeRegistry p_gmrSupportedGameModes, EnvironmentInfo p_eifEnvironmentInfo)
+		public static GameModeRegistry LoadInstalledGameModes(GameModeRegistry supportedGameModes, EnvironmentInfo environmentInfo)
 		{
 			Trace.TraceInformation("Loading Game Mode Factories for Installed Games...");
 			Trace.Indent();
 			
-			GameModeRegistry gmrInstalled = new GameModeRegistry();
-			foreach (string strGameId in p_eifEnvironmentInfo.Settings.InstalledGames)
+			var installedGameModes = new GameModeRegistry();
+
+            foreach (var gameId in environmentInfo.Settings.InstalledGames)
 			{
-				Trace.Write(String.Format("Loading {0}: ", strGameId));
-				if (p_gmrSupportedGameModes.IsRegistered(strGameId))
+				Trace.Write($"Loading {gameId}: ");
+
+                if (supportedGameModes.IsRegistered(gameId))
 				{
 					Trace.WriteLine("Supported");
-					gmrInstalled.RegisterGameMode(p_gmrSupportedGameModes.GetGameMode(strGameId));
+					installedGameModes.RegisterGameMode(supportedGameModes.GetGameMode(gameId));
 				}
 				else
-					Trace.WriteLine("Not Supported");
-			}
+                {
+                    Trace.WriteLine("Not Supported");
+                }
+            }
 			
 			Trace.Unindent();
-			return gmrInstalled;
+			return installedGameModes;
 		}
 
-		private Dictionary<string, IGameModeFactory> m_dicGameModeFactories = new Dictionary<string, IGameModeFactory>(StringComparer.OrdinalIgnoreCase);
+		private readonly Dictionary<string, IGameModeFactory> _gameModeFactories = new Dictionary<string, IGameModeFactory>(StringComparer.OrdinalIgnoreCase);
 
 		#region Properties
 
@@ -114,71 +146,56 @@ namespace Nexus.Client.Games
 		{
 			get
 			{
-				foreach (IGameModeFactory gmfFactory in m_dicGameModeFactories.Values)
-					yield return gmfFactory.GameModeDescriptor;
-			}
+				foreach (var gameModeFactory in _gameModeFactories.Values)
+                {
+                    yield return gameModeFactory.GameModeDescriptor;
+                }
+            }
 		}
 
 		/// <summary>
 		/// Gets the list of factories of the registered game modes.
 		/// </summary>
 		/// <value>The list of factories of the registered game modes.</value>
-		public IEnumerable<IGameModeFactory> RegisteredGameModeFactories
-		{
-			get
-			{
-				return m_dicGameModeFactories.Values;
-			}
-		}
+		public IEnumerable<IGameModeFactory> RegisteredGameModeFactories => _gameModeFactories.Values;
 
-		#endregion
+        #endregion
 
-		#region Constructors
-
-		/// <summary>
-		/// The default constructor.
-		/// </summary>
-		public GameModeRegistry()
-		{
-		}
-
-		#endregion
-
-		/// <summary>
+        /// <summary>
 		/// Registers the specified game mode.
 		/// </summary>
-		/// <param name="p_gmfGameModeFactory">The factory for the game mode to register.</param>
-		public void RegisterGameMode(IGameModeFactory p_gmfGameModeFactory)
+		/// <param name="gameModeFactory">The factory for the game mode to register.</param>
+		public void RegisterGameMode(IGameModeFactory gameModeFactory)
 		{
-			if (m_dicGameModeFactories.ContainsKey(p_gmfGameModeFactory.GameModeDescriptor.ModeId))
+			if (_gameModeFactories.ContainsKey(gameModeFactory.GameModeDescriptor.ModeId))
 			{
-				string strError = String.Format("{0} has the same Game Mode Id as {1}. {0} will be replaced in the registry.", m_dicGameModeFactories[p_gmfGameModeFactory.GameModeDescriptor.ModeId].GameModeDescriptor.Name, p_gmfGameModeFactory.GameModeDescriptor.Name);
-				Trace.TraceWarning(strError);
+				var error = $"{_gameModeFactories[gameModeFactory.GameModeDescriptor.ModeId].GameModeDescriptor.Name} has the same Game Mode Id as {gameModeFactory.GameModeDescriptor.Name}. {_gameModeFactories[gameModeFactory.GameModeDescriptor.ModeId].GameModeDescriptor.Name} will be replaced in the registry.";
+				Trace.TraceWarning(error);
 			}
-			m_dicGameModeFactories[p_gmfGameModeFactory.GameModeDescriptor.ModeId] = p_gmfGameModeFactory;
+
+			_gameModeFactories[gameModeFactory.GameModeDescriptor.ModeId] = gameModeFactory;
 		}
 
 		/// <summary>
 		/// Determines if the specified game mode is in the registry.
 		/// </summary>
-		/// <param name="p_strGameModeId">The id of the game mode whose presence in the registry is to be determined.</param>
+		/// <param name="gameModeId">The id of the game mode whose presence in the registry is to be determined.</param>
 		/// <returns><c>true</c> if the specified game mode is in the registry;
 		/// <c>false</c> otherwise.</returns>
-		public bool IsRegistered(string p_strGameModeId)
+		public bool IsRegistered(string gameModeId)
 		{
-			return m_dicGameModeFactories.ContainsKey(p_strGameModeId);
+			return _gameModeFactories.ContainsKey(gameModeId);
 		}
 
 		/// <summary>
 		/// Gets the game mode factory registered for the given game mode id.
 		/// </summary>
-		/// <param name="p_strGameModeId">The id of the game mode for which to retrieve a factory.</param>
+		/// <param name="gameModeId">The id of the game mode for which to retrieve a factory.</param>
 		/// <returns>The game mode factory registered for the given game mode id,
 		/// or <c>null</c> if no factory is registered for the given id.</returns>
-		public IGameModeFactory GetGameMode(string p_strGameModeId)
+		public IGameModeFactory GetGameMode(string gameModeId)
 		{
-			IGameModeFactory gmfFactory = null;
-			m_dicGameModeFactories.TryGetValue(p_strGameModeId, out gmfFactory);
+            _gameModeFactories.TryGetValue(gameModeId, out var gmfFactory);
 			return gmfFactory;
 		}
 	}

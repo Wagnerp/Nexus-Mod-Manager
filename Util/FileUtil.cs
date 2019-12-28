@@ -1,18 +1,19 @@
-﻿using System;
-using System.IO;
-using System.Text.RegularExpressions;
-using System.Threading;
-using ChinhDo.Transactions;
-using Nexus.Client.Util.Collections;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
-
-namespace Nexus.Client.Util
+﻿namespace Nexus.Client.Util
 {
-	/// <summary>
-	/// Utility functions to work with files.
-	/// </summary>
-	public class FileUtil
+    using System;
+    using System.Collections.Generic;
+    using System.Diagnostics;
+    using System.IO;
+    using System.Runtime.InteropServices;
+    using System.Text.RegularExpressions;
+    using System.Threading;
+
+    using Nexus.Client.Util.Collections;
+
+    /// <summary>
+    /// Utility functions to work with files.
+    /// </summary>
+    public class FileUtil
 	{
 		// Copies, moves, renames, or deletes a file system object. 
 		[DllImport("shell32.dll", CharSet = CharSet.Unicode)]
@@ -132,47 +133,6 @@ namespace Nexus.Client.Util
 				return false;
 			else
 				return true;
-		}
-
-		/// <summary>
-		/// Copies the source to the destination.
-		/// </summary>
-		/// <remarks>
-		/// If the source is a directory, it is copied recursively.
-		/// </remarks>
-		/// <param name="p_tfmFileManager">The transactional file manager to use to copy the files.</param>
-		/// <param name="p_strSource">The path from which to copy.</param>
-		/// <param name="p_strDestination">The path to which to copy.</param>
-		/// <param name="p_fncCopyCallback">A callback method that notifies the caller when a file has been copied,
-		/// and provides the opportunity to cancel the copy operation.</param>
-		/// <returns><c>true</c> if the copy operation wasn't cancelled; <c>false</c> otherwise.</returns>
-		public static bool Copy(TxFileManager p_tfmFileManager, string p_strSource, string p_strDestination, Func<string, bool> p_fncCopyCallback)
-		{
-			if (File.Exists(p_strSource))
-			{
-				if (!Directory.Exists(Path.GetDirectoryName(p_strDestination)))
-					p_tfmFileManager.CreateDirectory(Path.GetDirectoryName(p_strDestination));
-				p_tfmFileManager.Copy(p_strSource, p_strDestination, true);
-				if ((p_fncCopyCallback != null) && p_fncCopyCallback(p_strSource))
-					return false;
-			}
-			else if (Directory.Exists(p_strSource))
-			{
-				if (!Directory.Exists(p_strDestination))
-					p_tfmFileManager.CreateDirectory(p_strDestination);
-				string[] strFiles = Directory.GetFiles(p_strSource);
-				foreach (string strFile in strFiles)
-				{
-					p_tfmFileManager.Copy(strFile, Path.Combine(p_strDestination, Path.GetFileName(strFile)), true);
-					if ((p_fncCopyCallback != null) && p_fncCopyCallback(strFile))
-						return false;
-				}
-				string[] strDirectories = Directory.GetDirectories(p_strSource);
-				foreach (string strDirectory in strDirectories)
-					if (!Copy(strDirectory, Path.Combine(p_strDestination, Path.GetFileName(strDirectory)), p_fncCopyCallback))
-						return false;
-			}
-			return true;
 		}
 
 		/// <summary>
@@ -355,17 +315,61 @@ namespace Nexus.Client.Util
 			return p_strPath.Trim(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar).EndsWith(Path.VolumeSeparatorChar.ToString(), StringComparison.OrdinalIgnoreCase);
 		}
 
-		/// <summary>
-		/// Writes the given data to the specified file.
-		/// </summary>
-		/// <remarks>
-		/// If the specified file exists, it will be overwritten. If the specified file
-		/// does not exist, it is created. If the directory containing the specified file
-		/// does not exist, it is created.
-		/// </remarks>
-		/// <param name="p_strPath">The path to which to write the given data.</param>
-		/// <param name="p_bteData">The data to write to the file.</param>
-		public static void WriteAllBytes(string p_strPath, byte[] p_bteData)
+        /// <summary>
+        /// Determines if the file system of the drive is suitable for NMM to use.
+        /// </summary>
+        /// <param name="p_strPath">Path to folder on drive we want to check.</param>
+        /// <returns>True if we expect NMM to be able to use the drive in question, otherwise false.</returns>
+        public static bool DoesFileSystemSupportSymbolicLinks(string p_strPath)
+        {
+            if (string.IsNullOrEmpty(p_strPath))
+            {
+                // Won't matter if there's no path.
+                return true;
+            }
+
+            // This list can be extended as needed, and is not case sensitive.
+            var knownBadFileSystems = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                "FAT",
+                "FAT32",
+                "ReFS",
+                "exFAT"
+            };
+
+            var file = new FileInfo(p_strPath);
+
+            if (file.Directory != null)
+            {
+                var drive = new DriveInfo(file.Directory.Root.FullName);
+
+                return !knownBadFileSystems.Contains(drive.DriveFormat);
+            }
+            
+            // Either the path points to the root, or something is very wrong.
+            if (Regex.IsMatch(p_strPath, @"[a-zA-Z]:"))
+            {
+                return !knownBadFileSystems.Contains(p_strPath);
+            }
+            else
+            {
+                // No idea how to handle this, so just assume it works.
+                Trace.TraceWarning($"Could not determine file system for path \"{p_strPath}\".");
+                return true;
+            }
+        }
+
+        /// <summary>
+        /// Writes the given data to the specified file.
+        /// </summary>
+        /// <remarks>
+        /// If the specified file exists, it will be overwritten. If the specified file
+        /// does not exist, it is created. If the directory containing the specified file
+        /// does not exist, it is created.
+        /// </remarks>
+        /// <param name="p_strPath">The path to which to write the given data.</param>
+        /// <param name="p_bteData">The data to write to the file.</param>
+        public static void WriteAllBytes(string p_strPath, byte[] p_bteData)
 		{
 			string strDirectory = Path.GetDirectoryName(p_strPath);
 			if (!Directory.Exists(strDirectory))

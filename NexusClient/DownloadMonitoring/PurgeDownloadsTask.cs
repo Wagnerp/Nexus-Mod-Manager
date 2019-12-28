@@ -12,9 +12,6 @@ namespace Nexus.Client.ModManagement
 {
 	public class PurgeDownloadsTask : ThreadedBackgroundTask
 	{
-
-		bool m_booCancel = false;
-		
 		#region Properties
 
 		/// <summary>
@@ -78,26 +75,17 @@ namespace Nexus.Client.ModManagement
 		{
 			Start(ConfirmActionMethod);
 		}
-
-		/// <summary>
-		/// Cancels the update.
-		/// </summary>
-		public override void Cancel()
-		{
-			base.Cancel();
-			m_booCancel = true;
-		}
 				
 		/// <summary>
 		/// The method that is called to start the backgound task.
 		/// </summary>
-		/// <param name="p_objArgs">Arguments to for the task execution.</param>
+		/// <param name="args">Arguments to for the task execution.</param>
 		/// <returns>Always <c>null</c>.</returns>
-		protected override object DoWork(object[] p_objArgs)
+		protected override object DoWork(object[] args)
 		{
 			try
 			{
-				ConfirmActionMethod camConfirm = (ConfirmActionMethod)p_objArgs[0];
+				ConfirmActionMethod camConfirm = (ConfirmActionMethod)args[0];
 				OverallMessage = "Starting purge downloads...";
 				OverallProgress = 0;
 				OverallProgressStepSize = 1;

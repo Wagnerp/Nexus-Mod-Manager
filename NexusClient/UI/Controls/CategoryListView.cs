@@ -62,7 +62,6 @@ namespace Nexus.Client.UI.Controls
 		/// Occurs whenever the selected mod's readme file is being opened.
 		/// </summary>
 		public event EventHandler<ModReadmeRequestEventArgs> ModReadmeFileRequested;
-		public event EventHandler ReadmeScan;
 		/// <summary>
 		/// Occurs whenever selected mod's "warning update" status is toggled.
 		/// </summary>
@@ -524,14 +523,18 @@ namespace Nexus.Client.UI.Controls
 				{
 					IMod modMod = ((IMod)rowObject);
 					if (!string.IsNullOrEmpty(modMod.HumanReadableVersion))
-						Local = modMod.HumanReadableVersion;
+                    {
+                        Local = modMod.HumanReadableVersion;
+                    }
 
-					if (!string.IsNullOrEmpty(modMod.LastKnownVersion))
-						Online = modMod.LastKnownVersion;
+                    if (!string.IsNullOrEmpty(modMod.LastKnownVersion))
+                    {
+                        Online = modMod.LastKnownVersion;
+                    }
 
-					if (!(Local.Equals(Online) && Local.Equals("?")))
+                    if (!(Local.Equals(Online) && Local.Equals("?")))
 					{
-						Val = string.Format("{0} / {1}", Local, Online);
+						Val = $"{Local} / {Online}";
 					}
 
 					return Val;
@@ -1561,14 +1564,9 @@ namespace Nexus.Client.UI.Controls
 		/// </summary>
 		public void SizeColumnsToFit()
 		{
-            // No one wants every column to be exactly the same width
-            /*
-			Int32 intFixedWidth = 0;
-			for (Int32 i = 0; i < this.Columns.Count; i++)
-				if (this.Columns[i] != tlcModName)
-					intFixedWidth += this.Columns[i].Width;
-			tlcModName.Width = this.ClientSize.Width - intFixedWidth;
-            */
+			// As of now it just makes sure the Mod Name column isn't too short.
+			if (tlcModName.Width < 250)
+				tlcModName.Width = 250;
         }
 
         /// <summary>
